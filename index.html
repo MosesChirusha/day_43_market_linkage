@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Market Linkage Platform V2</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<style>
+body {font-family: Arial; background:#f4f7f6; margin:0;}
+header {background:#2e7d32;color:white;padding:18px;text-align:center;}
+.container {max-width:1100px;margin:auto;padding:20px;}
+.card {background:white;padding:18px;border-radius:10px;margin-bottom:20px;}
+.grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;}
+input,select,textarea,button {
+  width:100%;padding:10px;margin-top:8px;border-radius:6px;border:1px solid #ccc;
+}
+button {background:#2e7d32;color:white;border:none;cursor:pointer;}
+.listing {border:1px solid #ddd;padding:12px;border-radius:8px;background:#fafafa;}
+.badge {background:#e8f5e9;color:#2e7d32;padding:4px 8px;border-radius:20px;font-size:12px;}
+.small {font-size:13px;color:#666;}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Market Linkage Platform V2</h1>
+<p>Cloud-powered multi-user produce marketplace</p>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h2>Add Produce</h2>
+<div class="grid">
+<input id="farmer" placeholder="Your Name">
+<input id="location" placeholder="Location">
+<input id="contact" placeholder="Phone / Email">
+
+<select id="produce">
+<option value="">Produce</option>
+<option>Maize</option>
+<option>Beans</option>
+<option>Rice</option>
+<option>Tomatoes</option>
+<option>Potatoes</option>
+<option>Cassava</option>
+<option>Bananas</option>
+<option>Vegetables</option>
+</select>
+
+<input id="quantity" placeholder="Quantity">
+<input id="price" placeholder="Price">
+</div>
+
+<textarea id="notes" placeholder="Notes"></textarea>
+<button onclick="addListing()">Publish Listing</button>
+</div>
+
+<div class="card">
+<h2>Available Listings</h2>
+<div id="listings" class="grid"></div>
+</div>
+
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+getFirestore, collection, addDoc,
+onSnapshot, deleteDoc, doc, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+ // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyAGkCFYyAYElCnWO0lYQ0fpQrfYAi76hwQ",
+    authDomain: "day42-34b2a.firebaseapp.com",
+    projectId: "day42-34b2a",
+    storageBucket: "day42-34b2a.firebasestorage.app",
+    messagingSenderId: "67342457243",
+    appId: "1:67342457243:web:747cda45b4ebc8c438e93e"
+  };
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const listRef = collection(db, "listings");
+
+window.addListing = async function () {
+  if (!farmer.value || !produce.value || !quantity.value) {
+    alert("Fill required fields");
+    return;
+  }
+
+  await addDoc(listRef, {
+    farmer: farmer.value,
+    location: location.value,
+    contact: contact.value,
+    produce: produce.value,
+    quantity: quantity.value,
+    price: price.value,
+    notes: notes.value,
+    created: Date.now()
+  });
+
+  document.querySelectorAll("input, textarea").forEach(i=>i.value="");
+};
+
+function render(data) {
+  listings.innerHTML = data.map(x => `
+    <div class="listing">
+      <div class="badge">${x.produce}</div>
+      <strong>${x.quantity}</strong>
+      <div>Price: ${x.price || "-"}</div>
+      <div>Seller: ${x.farmer}</div>
+      <div>Location: ${x.location}</div>
+      <div>Contact: ${x.contact}</div>
+      <div class="small">${x.notes || ""}</div>
+      <button onclick="removeItem('${x.id}')">Remove</button>
+    </div>
+  `).join("");
+}
+
+window.removeItem = async function(id){
+  await deleteDoc(doc(db,"listings",id));
+};
+
+const q = query(listRef, orderBy("created","desc"));
+
+onSnapshot(q, snap => {
+  const arr = [];
+  snap.forEach(d => arr.push({id:d.id, ...d.data()}));
+  render(arr);
+});
+
+</script>
+
+</body>
+</html>
