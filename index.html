@@ -5,28 +5,53 @@
 <title>Market Linkage Platform</title>
 <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
 <h1>Market Linkage Platform</h1>
+<p class="subtitle">Connect Farmers and Buyers Directly</p>
 
 <div class="card">
   <h2>Add Produce Listing</h2>
 
-  <input id="farmer" placeholder="Farmer name">
-  <input id="produce" placeholder="Produce type">
-  <input id="quantity" placeholder="Quantity">
+  <input id="farmer" placeholder="Farmer Name">
+  <input id="phone" placeholder="Contact Phone">
   <input id="location" placeholder="Location">
 
-  <button onclick="addListing()">Publish Listing</button>
+  <select id="crop">
+    <option value="">Select Crop</option>
+    <option>Maize</option>
+    <option>Beans</option>
+    <option>Rice</option>
+    <option>Tomatoes</option>
+    <option>Potatoes</option>
+    <option>Cassava</option>
+    <option>Bananas</option>
+  </select>
+
+  <input id="quantity" placeholder="Quantity (kg)">
+  <input id="price" placeholder="Price per kg">
+
+  <button onclick="addListing()">Add Listing</button>
 </div>
 
 <div class="card">
-  <h2>Available Produce</h2>
-  <div id="listings"></div>
+  <h2>Search Listings</h2>
+  <input id="search" placeholder="Search crop or location" oninput="renderListings()">
+
+  <select id="filterCrop" onchange="renderListings()">
+    <option value="">All Crops</option>
+    <option>Maize</option>
+    <option>Beans</option>
+    <option>Rice</option>
+    <option>Tomatoes</option>
+    <option>Potatoes</option>
+    <option>Cassava</option>
+    <option>Bananas</option>
+  </select>
 </div>
 
-<script type="module" src="script.js"></script>
+<div id="listings"></div>
 
+<script src="script.js"></script>
 </body>
 </html>

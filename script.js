@@ -1,93 +1,92 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+const STORAGE_KEY = "market_listings_v1";
 
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  onSnapshot,
-  query,
-  orderBy
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+function getListings() {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+}
 
+function saveListings(list) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+}
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAGkCFYyAYElCnWO0lYQ0fpQrfYAi76hwQ",
-  authDomain: "day42-34b2a.firebaseapp.com",
-  projectId: "day42-34b2a",
-  storageBucket: "day42-34b2a.firebasestorage.app",
-  messagingSenderId: "67342457243",
-  appId: "1:67342457243:web:747cda45b4ebc8c438e93e"
-};
+function addListing() {
+  const farmer = farmerInput("farmer");
+  const phone = farmerInput("phone");
+  const location = farmerInput("location");
+  const crop = farmerInput("crop");
+  const quantity = farmerInput("quantity");
+  const price = farmerInput("price");
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const listRef = collection(db, "listings");
-
-const listingsDiv = document.getElementById("listings");
-
-
-// ✅ ADD LISTING
-
-window.addListing = async function () {
-
-  const farmer = document.getElementById("farmer").value.trim();
-  const produce = document.getElementById("produce").value.trim();
-  const quantity = document.getElementById("quantity").value.trim();
-  const location = document.getElementById("location").value.trim();
-
-  if (!farmer || !produce || !quantity) {
-    alert("Please fill farmer, produce and quantity");
+  if (!farmer || !phone || !location || !crop || !quantity || !price) {
+    alert("Fill all fields");
     return;
   }
 
-  try {
+  const listing = {
+    id: Date.now(),
+    farmer,
+    phone,
+    location,
+    crop,
+    quantity,
+    price,
+    date: new Date().toLocaleDateString()
+  };
 
-    await addDoc(listRef, {
-      farmer: farmer || "",
-      produce: produce || "",
-      quantity: quantity || "",
-      location: location || "",
-      created: Date.now()
-    });
+  const listings = getListings();
+  listings.unshift(listing);
+  saveListings(listings);
 
-    document.getElementById("farmer").value = "";
-    document.getElementById("produce").value = "";
-    document.getElementById("quantity").value = "";
-    document.getElementById("location").value = "";
+  clearForm();
+  renderListings();
+}
 
-    alert("Listing published");
+function farmerInput(id) {
+  return document.getElementById(id).value.trim();
+}
 
-  } catch (err) {
-    console.error("Write failed:", err);
-    alert(err.message);
-  }
-};
+function clearForm() {
+  ["farmer","phone","location","crop","quantity","price"]
+    .forEach(id => document.getElementById(id).value = "");
+}
 
+function deleteListing(id) {
+  const list = getListings().filter(l => l.id !== id);
+  saveListings(list);
+  renderListings();
+}
 
-// ✅ LIVE LISTINGS VIEW
+function renderListings() {
+  const container = document.getElementById("listings");
+  const search = document.getElementById("search").value.toLowerCase();
+  const filterCrop = document.getElementById("filterCrop").value;
 
-const q = query(listRef, orderBy("created", "desc"));
+  let listings = getListings();
 
-onSnapshot(q, (snapshot) => {
+  listings = listings.filter(l => {
+    const matchSearch =
+      l.crop.toLowerCase().includes(search) ||
+      l.location.toLowerCase().includes(search);
 
-  listingsDiv.innerHTML = "";
+    const matchCrop = !filterCrop || l.crop === filterCrop;
 
-  snapshot.forEach(doc => {
-
-    const d = doc.data();
-
-    const div = document.createElement("div");
-    div.className = "listing";
-
-    div.innerHTML =
-      "<b>" + d.produce + "</b> — " +
-      d.quantity +
-      "<br>Farmer: " + d.farmer +
-      "<br>Location: " + (d.location || "N/A");
-
-    listingsDiv.appendChild(div);
-
+    return matchSearch && matchCrop;
   });
 
-});
+  container.innerHTML = listings.map(l => `
+    <div class="listing">
+      <strong>${l.crop}</strong> — ${l.quantity} kg
+      <div class="meta">
+        Farmer: ${l.farmer}<br>
+        Location: ${l.location}<br>
+        Price: ${l.price} per kg<br>
+        Contact: ${l.phone}<br>
+        Posted: ${l.date}
+      </div>
+      <button class="deleteBtn" onclick="deleteListing(${l.id})">
+        Remove
+      </button>
+    </div>
+  `).join("");
+}
+
+renderListings();
